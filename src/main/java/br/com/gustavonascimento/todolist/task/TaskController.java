@@ -30,16 +30,18 @@ public class TaskController {
     var idUser = request.getAttribute("idUser");
     taskModel.setIdUser((UUID) idUser);
 
-    var currentDate = LocalDateTime.now();
-    var startDate = taskModel.getStartAt();
-    var endDate = taskModel.getEndAt();
+    var currentDateTask = LocalDateTime.now();
+    var startDateTask = taskModel.getStartAt();
+    var endDateTask = taskModel.getEndAt();
 
-    if(currentDate.isAfter(startDate) || currentDate.isAfter(endDate)) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("A data de início / término deve ser maior que atual.");
+    if(currentDateTask.isAfter(startDateTask) || currentDateTask.isAfter(endDateTask)) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body("A data de início / término deve ser maior que atual.");
     };
 
-    if(startDate.isAfter(endDate)) {
-      return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("A data de início deve ser menor que a data de termino");
+    if(startDateTask.isAfter(endDateTask)) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body("A data de início deve ser menor que a data de termino");
     };
 
     var task = this.taskRepository.save(taskModel);
@@ -55,12 +57,24 @@ public class TaskController {
   }
 
   @PutMapping("/{id}")
-  public TaskModel update(@RequestBody TaskModel taskModel, @PathVariable UUID id, HttpServletRequest request) {
+  public ResponseEntity update(@RequestBody TaskModel taskModel, @PathVariable UUID id, HttpServletRequest request) {
     
     var task = this.taskRepository.findById(id).orElse(null);
 
+    if(task == null) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body("Tarefa não encontrada");
+    }
+
+    var idUser = request.getAttribute("idUser");
+
+    if(!task.getIdUser().equals(idUser)) {
+      return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+        .body("Usuário não tem permissão para alterar a tarefa");
+    }
+
     Utils.copyNonNullProperties(taskModel, task);
-    
-    return this.taskRepository.save(task);
+    var taskUpdated = this.taskRepository.save(task);
+    return ResponseEntity.ok().body(this.taskRepository.save(taskUpdated));
   }
 }
