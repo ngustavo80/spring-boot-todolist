@@ -32,6 +32,28 @@ public class TaskModel {
 
   @CreationTimestamp
   private LocalDateTime createdAt;
+
+  public void setTitle(String title) throws Exception {
+    if(title.length() > 50) {
+      throw new Exception("O campo título, descrição ou prioridade excedeu o limite de caracteres");
+    }
+    this.title = title;
+  }
+
+  public void setDescription(String description) throws Exception {
+    if(description.length() > 150) {
+      throw new Exception("O campo descrição excedeu o limite de caracteres");
+    }
+    this.description = description;
+  }
+
+  public void setPriority(String priority) throws Exception {
+    if(priority.length() > 5) {
+      throw new Exception("O campo prioridade excedeu o limite de caracteres");
+    }
+    this.priority = priority;
+  }
+
 }
 
 
