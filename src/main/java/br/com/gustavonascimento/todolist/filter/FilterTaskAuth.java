@@ -24,34 +24,43 @@ public class FilterTaskAuth extends OncePerRequestFilter {
   protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
       throws ServletException, IOException {
 
-    // Pegando usuário e senha
-    var authorization = request.getHeader("Authorization");
-    var authBase64 = authorization.substring("Basic".length()).trim();
+      var servletPath = request.getServletPath();
 
-    byte[] authBase64Decoded = Base64.getDecoder().decode(authBase64);
+      if(servletPath.startsWith("/tasks/")) {
 
-    var authBase64String = new String(authBase64Decoded);
-    String[] credentials = authBase64String.split(":");
+        // Pegando usuário e senha
+        var authorization = request.getHeader("Authorization");
+        var authBase64 = authorization.substring("Basic".length()).trim();
 
-    String username = credentials[0];
-    String password = credentials[1];
+        byte[] authBase64Decoded = Base64.getDecoder().decode(authBase64);
 
-    // Validando usuário
-    var user = this.userRepository.findByUsername(username);
-    
-    if(user == null) {
-      response.sendError(401);
-    } else {
-      //Validando senha
-      var isPasswordValid = BCrypt.verifyer().verify(password.toCharArray(), user.getPassword());
-      if(isPasswordValid.verified) {
-        filterChain.doFilter(request, response);
+        var authBase64String = new String(authBase64Decoded);
+        String[] credentials = authBase64String.split(":");
+
+        String username = credentials[0];
+        String password = credentials[1];
+
+        // Validando usuário
+        var user = this.userRepository.findByUsername(username);
+        
+        if(user == null) {
+          response.sendError(401);
+        } else {
+          //Validando senha
+          var isPasswordValid = BCrypt.verifyer().verify(password.toCharArray(), user.getPassword());
+          if(isPasswordValid.verified) {
+            request.setAttribute("idUser", user.getId());
+            filterChain.doFilter(request, response);
+          } else {
+            response.sendError(401);
+          }
+          // Seguindo com o fluxo da aplicação
+        }
+
       } else {
-        response.sendError(401);
+        filterChain.doFilter(request, response);
       }
-      // Seguindo com o fluxo da aplicação
-    }
-    
+        
   }
   
 }
